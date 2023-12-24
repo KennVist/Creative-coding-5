@@ -1,0 +1,97 @@
+ArrayList<Particle> particles;
+int numParticles = 50;
+
+void setup() {
+  size(600, 600, P3D);
+  particles = new ArrayList<Particle>();
+  initiateParticleSystem();
+}
+
+void initiateParticleSystem() {
+  particles.clear();
+  for (int i = 0; i < numParticles; i++) {
+    float posX = random(-200, 200);
+    float posY = random(-200, 200);
+    float posZ = random(-200, 200);
+    float radius = random(5, 10);
+    PVector pos = new PVector(posX, posY, posZ);
+    Particle particle = new Particle(pos, radius);
+    particles.add(particle);
+  }
+}
+
+void draw() {
+  background(0);
+  translate(width / 2, height / 2);
+  rotateX(frameCount * 0.01);
+  rotateY(frameCount * 0.01);
+  for (Particle particle : particles) {
+    particle.run();
+  }
+}
+
+void mousePressed() {
+  background(0);
+  initiateParticleSystem();
+}
+
+class Particle {
+  PVector position;
+  PVector velocity;
+  PVector acceleration;
+  float radius;
+  float minDistance = 50;
+
+  Particle(PVector position, float radius) {
+    this.position = position;
+    this.radius = radius;
+    velocity = new PVector(0, 0, 0);
+    acceleration = new PVector(0, 0, 0);
+  }
+
+  void run() {
+    attraction();
+    update();
+    display();
+  }
+
+  void display() {
+    pushMatrix(); 
+    translate(position.x, position.y, position.z); 
+    fill(102, 204, 255);
+    noStroke();
+    sphere(radius);
+    popMatrix(); 
+  }
+
+  void attraction() {
+    for (Particle other : particles) {
+      if (other != this) {
+        PVector direction = PVector.sub(position, other.position);
+        float distance = direction.mag();
+
+        if (distance < minDistance * 2) {
+          stroke(0, 225, 255);
+          line(position.x, position.y, position.z, other.position.x, other.position.y, other.position.z);
+        }
+
+        if (distance > 0 && distance < minDistance) {
+          direction.normalize();
+          direction.mult(100 / distance);
+          acceleration.add(direction);
+        } else if (distance >= minDistance) {
+          direction.normalize();
+          direction.mult(-1 / distance);
+          acceleration.add(direction);
+        }
+      }
+    }
+  }
+
+  void update() {
+    velocity.add(acceleration);
+    velocity.limit(3);
+    position.add(velocity);
+    acceleration.mult(0);
+  }
+}
